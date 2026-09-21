@@ -12,12 +12,13 @@ interface CardCarouselProps {
 export const CardCarousel: React.FC<CardCarouselProps> = ({ items }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const validItems = items.filter((item): item is CuratedItem => Boolean(item));
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
     const { scrollLeft, clientWidth } = scrollContainerRef.current;
     const index = Math.round(scrollLeft / 290);
-    setActiveIndex(Math.min(Math.max(0, index), items.length - 1));
+    setActiveIndex(Math.min(Math.max(0, index), validItems.length - 1));
   };
 
   const scrollToIndex = (index: number) => {
@@ -37,16 +38,16 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({ items }) => {
         onScroll={handleScroll}
         className="flex gap-3 px-4 overflow-x-auto no-scrollbar snap-x snap-mandatory scroll-smooth pb-3"
       >
-        {items.map((item) => (
+        {validItems.map((item) => (
           <LookbookCard key={item.itemId} item={item} />
         ))}
       </div>
 
       {/* Footer controls: indicator dots and card count */}
-      {items.length > 1 && (
+      {validItems.length > 1 && (
         <div className="flex items-center justify-between px-6 mt-1">
           <div className="flex gap-1.5 items-center">
-            {items.map((_, i) => (
+            {validItems.map((_, i) => (
               <button
                 key={i}
                 onClick={() => scrollToIndex(i)}
@@ -60,7 +61,7 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({ items }) => {
 
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-mono text-neutral-400">
-              {activeIndex + 1} / {items.length}
+              {activeIndex + 1} / {validItems.length}
             </span>
             <div className="hidden sm:flex items-center gap-1">
               <button
@@ -71,8 +72,8 @@ export const CardCarousel: React.FC<CardCarouselProps> = ({ items }) => {
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => scrollToIndex(Math.min(items.length - 1, activeIndex + 1))}
-                disabled={activeIndex === items.length - 1}
+                onClick={() => scrollToIndex(Math.min(validItems.length - 1, activeIndex + 1))}
+                disabled={activeIndex === validItems.length - 1}
                 className="p-1 rounded-md bg-neutral-800 hover:bg-neutral-700 text-neutral-300 disabled:opacity-30"
               >
                 <ChevronRight className="w-3.5 h-3.5" />

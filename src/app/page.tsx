@@ -12,6 +12,8 @@ import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { LookbookResponse } from "@/types/lookbook";
 import { Compass, AlertCircle, RefreshCw } from "lucide-react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 export default function Home() {
   const [lookbook, setLookbook] = useState<LookbookResponse | null>(null);
   const [activeTabId, setActiveTabId] = useState<string>("");
@@ -28,7 +30,7 @@ export default function Home() {
     setActiveTabId("");
 
     try {
-      const res = await fetch("/api/curate", {
+      const res = await fetch(`${API_URL}/api/curate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
