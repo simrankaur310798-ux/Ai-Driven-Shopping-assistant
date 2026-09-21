@@ -10,9 +10,15 @@ import { VibePills } from "@/components/VibePills";
 import { ShareBar } from "@/components/ShareBar";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { LookbookResponse } from "@/types/lookbook";
-import { Compass, AlertCircle, RefreshCw } from "lucide-react";
+import { Compass, AlertCircle, RefreshCw, Sparkles, UserRound } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
+interface HistoryEntry {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+}
 
 export default function Home() {
   const [lookbook, setLookbook] = useState<LookbookResponse | null>(null);
@@ -22,12 +28,16 @@ export default function Home() {
   const [error, setError] = useState<{ message: string; code?: string } | null>(
     null
   );
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   const fetchCuration = async (prompt: string, vibeContext?: string) => {
     setIsLoading(true);
     setError(null);
-    setLookbook(null);
     setActiveTabId("");
+    setHistory((entries) => [
+      ...entries,
+      { id: `${Date.now()}-user`, role: "user", text: prompt },
+    ]);
 
     try {
       const res = await fetch(`${API_URL}/api/curate`, {
@@ -36,6 +46,7 @@ export default function Home() {
         body: JSON.stringify({
           prompt,
           vibeContext: vibeContext || null,
+          conversationHistory: history.slice(-12),
         }),
       });
 
@@ -48,7 +59,23 @@ export default function Home() {
         };
       }
 
+      if (json.type === "conversation") {
+        setHistory((entries) => [
+          ...entries,
+          { id: `${Date.now()}-assistant`, role: "assistant", text: json.message || "" },
+        ]);
+        return;
+      }
+
       setLookbook(json.data);
+      setHistory((entries) => [
+        ...entries,
+        {
+          id: `${Date.now()}-lookbook`,
+          role: "assistant",
+          text: `I put together “${json.data.lookbookTitle}” for you.`,
+        },
+      ]);
       setLastPrompt(prompt);
       if (json.data.tabs && json.data.tabs.length > 0) {
         setActiveTabId(json.data.tabs[0].tabId);
@@ -70,6 +97,7 @@ export default function Home() {
     setActiveTabId("");
     setLastPrompt("");
     setError(null);
+    setHistory([]);
   };
 
   const currentTab = lookbook?.tabs.find((t) => t.tabId === activeTabId) || lookbook?.tabs[0];
@@ -81,6 +109,36 @@ export default function Home() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col pb-28">
+        {history.length > 0 && (
+          <div className="mx-auto w-full max-w-2xl space-y-3 px-4 pt-5">
+            {history.map((entry) => (
+              <div key={entry.id} className={`flex gap-2.5 ${entry.role === "user" ? "justify-end" : "justify-start"}`}>
+                {entry.role === "assistant" && (
+                  <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </div>
+                )}
+                <div className={`max-w-[82%] ${entry.role === "user" ? "order-first" : ""}`}>
+                  <div className={`mb-1 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${entry.role === "user" ? "text-right text-orange-400" : "text-neutral-500"}`}>
+                    {entry.role === "user" ? "You" : "SmartShop"}
+                  </div>
+                  <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    entry.role === "user"
+                      ? "rounded-tr-md bg-orange-500 text-white shadow-lg shadow-orange-950/20"
+                      : "rounded-tl-md border border-neutral-800 bg-neutral-900/80 text-neutral-300"
+                  }`}>
+                    {entry.text}
+                  </div>
+                </div>
+                {entry.role === "user" && (
+                  <div className="mt-6 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-neutral-800 text-neutral-400">
+                    <UserRound className="h-3.5 w-3.5" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         {/* Error Notification */}
         {error && (
           <div className="m-4 p-4 rounded-2xl bg-rose-950/40 border border-rose-500/40 text-rose-200">
@@ -156,7 +214,7 @@ export default function Home() {
         )}
 
         {/* Initial Empty State / Discovery Hero */}
-        {!isLoading && !lookbook && (
+        {!isLoading && !lookbook && history.length === 0 && (
           <div className="flex-1 flex flex-col justify-center px-4 py-8">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 via-orange-500/20 to-rose-500/20 border border-orange-500/30 text-orange-400 mb-4 shadow-xl">
@@ -171,35 +229,11 @@ export default function Home() {
             </div>
 
             {/* Quick Chips Accelerator */}
-            <div className="mb-6">
+            <div>
               <QuickChips
                 onSelect={(selectedPrompt) => fetchCuration(selectedPrompt)}
                 disabled={isLoading}
               />
-            </div>
-
-            {/* Value Props Bullet Cards */}
-            <div className="grid grid-cols-2 gap-2.5 px-4">
-              <div className="p-3 rounded-xl bg-neutral-800/40 border border-neutral-800 text-left">
-                <span className="text-sm mb-1 block">🌴</span>
-                <p className="text-xs font-semibold text-neutral-200">Deconstructed Trips</p>
-                <p className="text-[10px] text-neutral-400 mt-0.5">Day-to-night pacing for Goa, Manali & more</p>
-              </div>
-              <div className="p-3 rounded-xl bg-neutral-800/40 border border-neutral-800 text-left">
-                <span className="text-sm mb-1 block">🪔</span>
-                <p className="text-xs font-semibold text-neutral-200">Wedding Capsules</p>
-                <p className="text-[10px] text-neutral-400 mt-0.5">Haldi, Sangeet & Reception fits coordinated</p>
-              </div>
-              <div className="p-3 rounded-xl bg-neutral-800/40 border border-neutral-800 text-left">
-                <span className="text-sm mb-1 block">⚡</span>
-                <p className="text-xs font-semibold text-neutral-200">Zero-Friction Links</p>
-                <p className="text-[10px] text-neutral-400 mt-0.5">1-tap deep links directly into merchant apps</p>
-              </div>
-              <div className="p-3 rounded-xl bg-neutral-800/40 border border-neutral-800 text-left">
-                <span className="text-sm mb-1 block">💡</span>
-                <p className="text-xs font-semibold text-neutral-200">Stylist Notes</p>
-                <p className="text-[10px] text-neutral-400 mt-0.5">Fabric & pairing rationale for every piece</p>
-              </div>
             </div>
           </div>
         )}
