@@ -4,7 +4,8 @@ export type PlatformType =
   | "Amazon"
   | "Nykaa"
   | "Snitch"
-  | "Westside";
+  | "Westside"
+  | "FirstCry";
 
 export type ItemCategory =
   | "apparel"

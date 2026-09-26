@@ -22,6 +22,8 @@ export function generateMerchantLinks(platform: PlatformType, query: string) {
       return { deepLinkUrl: `https://www.snitch.co.in/search?q=${encoded}`, fallbackWebUrl: `https://www.snitch.co.in/search?q=${encoded}` };
     case "Westside":
       return { deepLinkUrl: `https://www.westside.com/search?q=${encoded}`, fallbackWebUrl: `https://www.westside.com/search?q=${encoded}` };
+    case "FirstCry":
+      return { deepLinkUrl: `https://www.firstcry.com/search?q=${encoded}`, fallbackWebUrl: `https://www.firstcry.com/search?q=${encoded}` };
   }
 }
 

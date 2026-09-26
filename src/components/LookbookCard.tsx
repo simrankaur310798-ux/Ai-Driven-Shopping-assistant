@@ -48,6 +48,12 @@ const PLATFORM_STYLES: Record<
     border: "border-emerald-500/30",
     label: "WESTSIDE",
   },
+  FirstCry: {
+    bg: "bg-orange-950/40",
+    text: "text-orange-300",
+    border: "border-orange-500/30",
+    label: "FIRSTCRY",
+  },
 };
 
 export const LookbookCard: React.FC<LookbookCardProps> = ({ item }) => {

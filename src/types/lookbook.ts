@@ -18,7 +18,8 @@ export type PlatformType =
   | "Amazon"
   | "Nykaa"
   | "Snitch"
-  | "Westside";
+  | "Westside"
+  | "FirstCry";
 
 export interface CuratedItem {
   itemId: string;

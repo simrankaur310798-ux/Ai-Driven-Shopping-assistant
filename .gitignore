@@ -34,3 +34,8 @@ Thumbs.db
 
 # TypeScript build info
 *.tsbuildinfo
+# Temporary working files
+scratch/
+*.txt
+*.pptx
+*.md
