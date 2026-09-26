@@ -1,7 +1,7 @@
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
-import { generateMerchantLinks, resolveItemImage } from "./lib/deeplink.js";
+import { generateMerchantLinks, normalizePlatform, resolveItemImage } from "./lib/deeplink.js";
 import { generateAssistantResponse, type ConversationTurn } from "./lib/openai.js";
 import type { LookbookResponse } from "./types/lookbook.js";
 
@@ -37,13 +37,29 @@ app.post("/api/curate", async (req, res) => {
     }
 
     const lookbook = assistantResponse;
-    const tabs = await Promise.all(lookbook.tabs.map(async (tab) => ({
+    const tabs = await Promise.all(lookbook.tabs.map(async (tab, tabIndex) => ({
       ...tab,
-      items: await Promise.all(tab.items.filter((item) => item && typeof item === "object").map(async (item) => {
-        const links = generateMerchantLinks(item.primaryPlatform, item.merchantSearchQuery || item.itemName);
+      tabId: typeof tab.tabId === "string" && tab.tabId ? tab.tabId : `group-${tabIndex + 1}`,
+      tabTitle: typeof tab.tabTitle === "string" && tab.tabTitle ? tab.tabTitle : "Recommended Picks",
+      tabIcon: typeof tab.tabIcon === "string" ? tab.tabIcon : "✨",
+      items: await Promise.all(tab.items.filter((item) => item && typeof item === "object" && typeof item.itemName === "string" && item.itemName.trim()).map(async (item, itemIndex) => {
+        const primaryPlatform = normalizePlatform(item.primaryPlatform);
+        const itemName = item.itemName.trim();
+        const merchantSearchQuery = typeof item.merchantSearchQuery === "string" && item.merchantSearchQuery.trim()
+          ? item.merchantSearchQuery.trim()
+          : itemName;
+        const links = generateMerchantLinks(primaryPlatform, merchantSearchQuery);
         return {
           ...item,
-          deepLinkUrl: links.deepLinkUrl,
+          itemId: typeof item.itemId === "string" && item.itemId ? item.itemId : `item-${tabIndex + 1}-${itemIndex + 1}`,
+          itemName,
+          primaryPlatform,
+          category: ["apparel", "footwear", "accessory", "grooming_beauty", "decor_gift"].includes(item.category) ? item.category : "apparel",
+          approxPriceINR: Number.isFinite(item.approxPriceINR) ? item.approxPriceINR : 0,
+          stylistNote: typeof item.stylistNote === "string" ? item.stylistNote : "A practical pick for your request.",
+          merchantSearchQuery,
+          imageKeyword: typeof item.imageKeyword === "string" ? item.imageKeyword : itemName,
+          deepLinkUrl: undefined,
           fallbackWebUrl: links.fallbackWebUrl,
           resolvedImageUrl: resolveItemImage(item.imageKeyword, item.category, item.itemId),
         };

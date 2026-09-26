@@ -1,29 +1,41 @@
 import { PlatformType } from "../types/lookbook.js";
 
+const PLATFORMS: PlatformType[] = ["Myntra", "Ajio", "Amazon", "Nykaa", "Snitch", "Westside", "FirstCry"];
+
+export function normalizePlatform(value: unknown): PlatformType {
+  if (typeof value === "string") {
+    const match = PLATFORMS.find((platform) => platform.toLowerCase() === value.trim().toLowerCase());
+    if (match) return match;
+  }
+  return "Amazon";
+}
+
 export function sanitizeSearchQuery(query: string): string {
   return query.replace(/[^\w\s-]/gi, " ").replace(/\s+/g, " ").trim();
 }
 
-export function generateMerchantLinks(platform: PlatformType, query: string) {
-  const cleanQuery = sanitizeSearchQuery(query);
+export function generateMerchantLinks(platformInput: unknown, queryInput: unknown): { fallbackWebUrl: string } {
+  const platform = normalizePlatform(platformInput);
+  const cleanQuery = sanitizeSearchQuery(typeof queryInput === "string" ? queryInput : "") || "popular products";
   const encoded = encodeURIComponent(cleanQuery);
-  const slug = cleanQuery.toLowerCase().replace(/\\s+/g, "-");
 
   switch (platform) {
     case "Myntra":
-      return { deepLinkUrl: `myntra://search?q=${encoded}`, fallbackWebUrl: `https://www.myntra.com/${encodeURIComponent(slug)}` };
+      return { fallbackWebUrl: `https://www.myntra.com/search?q=${encoded}` };
     case "Ajio":
-      return { deepLinkUrl: `ajio://search/${encoded}`, fallbackWebUrl: `https://www.ajio.com/search/?text=${encoded}` };
+      return { fallbackWebUrl: `https://www.ajio.com/search/?text=${encoded}` };
     case "Amazon":
-      return { deepLinkUrl: `amazon://s?k=${encoded}`, fallbackWebUrl: `https://www.amazon.in/s?k=${encoded}` };
+      return { fallbackWebUrl: `https://www.amazon.in/s?k=${encoded}` };
     case "Nykaa":
-      return { deepLinkUrl: `nykaa://search/${encoded}`, fallbackWebUrl: `https://www.nykaa.com/search/result/?q=${encoded}` };
+      return { fallbackWebUrl: `https://www.nykaa.com/search/result/?q=${encoded}` };
     case "Snitch":
-      return { deepLinkUrl: `https://www.snitch.co.in/search?q=${encoded}`, fallbackWebUrl: `https://www.snitch.co.in/search?q=${encoded}` };
+      return { fallbackWebUrl: `https://www.snitch.co.in/search?q=${encoded}` };
     case "Westside":
-      return { deepLinkUrl: `https://www.westside.com/search?q=${encoded}`, fallbackWebUrl: `https://www.westside.com/search?q=${encoded}` };
+      return { fallbackWebUrl: `https://www.westside.com/search?q=${encoded}` };
     case "FirstCry":
-      return { deepLinkUrl: `https://www.firstcry.com/search?q=${encoded}`, fallbackWebUrl: `https://www.firstcry.com/search?q=${encoded}` };
+      return { fallbackWebUrl: `https://www.firstcry.com/search?q=${encoded}` };
+    default:
+      return { fallbackWebUrl: `https://www.amazon.in/s?k=${encoded}` };
   }
 }
 

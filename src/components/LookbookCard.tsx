@@ -63,17 +63,7 @@ export const LookbookCard: React.FC<LookbookCardProps> = ({ item }) => {
     PLATFORM_STYLES[item.primaryPlatform] || PLATFORM_STYLES.Myntra;
 
   const handleOutboundClick = () => {
-    if (typeof window !== "undefined" && item.deepLinkUrl && item.fallbackWebUrl) {
-      const start = Date.now();
-      window.location.href = item.deepLinkUrl;
-
-      // If user is still on page after 1.5s (app not installed), fall back to web
-      setTimeout(() => {
-        if (Date.now() - start < 2000) {
-          window.open(item.fallbackWebUrl, "_blank", "noopener,noreferrer");
-        }
-      }, 1200);
-    } else if (item.fallbackWebUrl) {
+    if (typeof window !== "undefined" && item.fallbackWebUrl) {
       window.open(item.fallbackWebUrl, "_blank", "noopener,noreferrer");
     }
   };
